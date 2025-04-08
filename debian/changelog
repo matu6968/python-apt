@@ -1,3 +1,10 @@
+python-apt (3.0.0) unstable; urgency=medium
+
+  * Bump version to 3.0.0 to match APT and indicate stable series
+  * Refresh the mirror lists
+
+ -- Julian Andres Klode <jak@debian.org>  Tue, 08 Apr 2025 16:10:00 +0200
+
 python-apt (2.9.9) unstable; urgency=medium
 
   * Adapt to libapt-pkg7.0 PPA
