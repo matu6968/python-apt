@@ -25,12 +25,17 @@ def get_library_dir():
     from sysconfig import get_platform, get_python_version
 
     # Set the path to the build directory.
-    plat_specifier = f".{get_platform()}-{get_python_version()}"
-    library_dir = "../build/lib{}{}".format(
-        plat_specifier,
-        (sys.pydebug and "-pydebug" or ""),
-    )
-    return os.path.abspath(library_dir)
+    for plat_specifier in [
+        f".{get_platform()}-cpython-{get_python_version().replace('.', '')}",
+        f".{get_platform()}-{get_python_version()}",
+    ]:
+        library_dir = "../build/lib{}{}".format(
+            plat_specifier,
+            (sys.pydebug and "-pydebug" or ""),
+        )
+        if os.path.exists(library_dir):
+            return os.path.abspath(library_dir)
+    return None
 
 
 class MyTestRunner(unittest.runner.TextTestRunner):
