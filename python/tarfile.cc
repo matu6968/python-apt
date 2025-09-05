@@ -43,6 +43,7 @@ public:
     PyObject *py_data;
     // The requested member or NULL.
     const char *member;
+    const bool extract_data;
     // Set to true if an error occurred in the Python callback, or a file
     // was too large to read in extractdata.
     bool error;
@@ -60,8 +61,8 @@ public:
     virtual bool Process(Item &Itm,const unsigned char *Data,
                          unsigned long Size,unsigned long Pos);
 #endif
-    PyDirStream(PyObject *callback, const char *member=0) : callback(callback),
-        py_data(0), member(member), error(false), copy(0), copy_size(0)
+    PyDirStream(PyObject *callback, const char *member=0, const bool extract_data=true) : callback(callback),
+        py_data(0), member(member), extract_data(extract_data), error(false), copy(0), copy_size(0)
     {
         Py_XINCREF(callback);
     }
@@ -75,7 +76,7 @@ public:
 
 bool PyDirStream::DoItem(Item &Itm, int &Fd)
 {
-    if (!member || strcmp(Itm.Name, member) == 0) {
+    if (extract_data && (!member || strcmp(Itm.Name, member) == 0)) {
         // Allocate a new buffer if the old one is too small.
         if (Itm.Size > SIZE_MAX)
             goto to_large;
@@ -421,23 +422,27 @@ static PyObject *tarfile_extractall(PyObject *self, PyObject *args)
 }
 
 static const char *tarfile_go_doc =
-    "go(callback: callable[, member: str]) -> True\n\n"
+    "go(callback: callable[, member: str, extract_data: bool = True]) -> True\n\n"
     "Go through the archive and call the callable 'callback' for each\n"
     "member with 2 arguments. The first argument is the TarMember and\n"
     "the second one is the data, as bytes.\n\n"
     "The optional parameter 'member' can be used to specify the member for\n"
     "which to call the callback. If not specified, it will be called for all\n"
-    "members. If specified and not found, LookupError will be raised.";
-static PyObject *tarfile_go(PyObject *self, PyObject *args)
+    "members. If specified and not found, LookupError will be raised.\n\n"
+    "The optional parameter 'extract_data' can be set to False to not extract data.";
+static PyObject *tarfile_go(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *callback;
     PyApt_Filename member;
-    if (PyArg_ParseTuple(args,"O|O&",&callback, PyApt_Filename::Converter, &member) == 0)
+    int            extract_data  = 1;
+    static char *kwlist[] = {"callback", "member", "extract_data", nullptr};
+    if (PyArg_ParseTupleAndKeywords(args, kwds, "O|O&p", kwlist, &callback, PyApt_Filename::Converter, &member, &extract_data
+                ) == 0)
         return 0;
     if (member && strcmp(member, "") == 0)
         member = 0;
-    pkgDirStream Extract;
-    PyDirStream stream(callback, member);
+    // pkgDirStream Extract;
+    PyDirStream stream(callback, member, extract_data);
     ((PyTarFileObject*)self)->Fd.Seek(((PyTarFileObject*)self)->min);
     bool res = GetCpp<ExtractTar*>(self)->Go(stream);
     if (stream.error)
@@ -474,7 +479,7 @@ static PyObject *tarfile_extractdata(PyObject *self, PyObject *args)
 static PyMethodDef tarfile_methods[] = {
     {"extractdata",tarfile_extractdata,METH_VARARGS,tarfile_extractdata_doc},
     {"extractall",tarfile_extractall,METH_VARARGS,tarfile_extractall_doc},
-    {"go",tarfile_go,METH_VARARGS,tarfile_go_doc},
+    {"go",reinterpret_cast<PyCFunction>(tarfile_go),METH_VARARGS | METH_KEYWORDS,tarfile_go_doc},
     {NULL}
 };
 
