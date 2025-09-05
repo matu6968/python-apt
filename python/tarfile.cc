@@ -92,6 +92,8 @@ bool PyDirStream::DoItem(Item &Itm, int &Fd)
     }
     return true;
 to_large:
+    // Avoid copying unwanted data
+    Fd = -1;
     delete[] copy;
     copy = NULL;
     copy_size = 0;
@@ -131,6 +133,20 @@ bool PyDirStream::FinishedFile(Item &Itm,int Fd)
         py_data = Py_None;
     } else {
         py_data = PyBytes_FromStringAndSize(copy, Itm.Size);
+    }
+    // Check error if copy could not be written to the stream,
+    // e.g. if too large.
+    if (py_data == NULL) {
+        PyErr_Clear();
+        if (member) {
+            PyErr_Format(PyExc_MemoryError,
+                         "The member %s was too large to read into memory",
+                         Itm.Name);
+            error = true;
+            return false;
+        }
+        Py_INCREF(Py_None);
+        py_data = Py_None;
     }
 
     if (!callback)
