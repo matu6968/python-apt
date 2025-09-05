@@ -176,7 +176,7 @@ Tar Archives
         Return the contents of the member, as a bytes object. Raise
         LookupError if there is no member with the given name.
 
-    .. method:: go(callback: callable[, member: str]) -> True
+    .. method:: go(callback: callable[, member: str, extract_data: bool]) -> True
 
         Go through the archive and call the callable *callback* for each
         member with 2 arguments. The first argument is the :class:`TarMember`
@@ -185,6 +185,9 @@ Tar Archives
         The optional parameter *member* can be used to specify the member for
         which call the callback. If not specified, it will be called for all
         members. If specified and not found, LookupError will be raised.
+
+        The optional parameter *extract_data* can be set to ``False`` to not
+        extract data.
 
 .. class:: TarMember
 
