@@ -115,7 +115,7 @@ bool PyDirStream::Process(Item &Itm,const unsigned char *Data,
 #endif
 {
     if (copy != NULL)
-        memcpy(copy + Pos, Data,Size);
+        memcpy(copy + Pos, Data, Size);
     return true;
 }
 
@@ -425,7 +425,7 @@ static PyObject *tarfile_go(PyObject *self, PyObject *args)
     ((PyTarFileObject*)self)->Fd.Seek(((PyTarFileObject*)self)->min);
     bool res = GetCpp<ExtractTar*>(self)->Go(stream);
     if (stream.error)
-        return 0;
+        return nullptr;
     if (member && !stream.py_data)
         return PyErr_Format(PyExc_LookupError, "There is no member named '%s'",
                             member.path);
