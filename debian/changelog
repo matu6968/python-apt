@@ -1,3 +1,10 @@
+python-apt (3.0.0ubuntu1) questing; urgency=medium
+
+  * test_all: Add handling for new library build dir name
+  * Refresh mirror lists
+
+ -- Julian Andres Klode <juliank@ubuntu.com>  Mon, 06 Oct 2025 12:54:32 +0200
+
 python-apt (3.0.0) unstable; urgency=medium
 
   * Bump version to 3.0.0 to match APT and indicate stable series
