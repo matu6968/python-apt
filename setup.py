@@ -61,6 +61,7 @@ def get_version():
     version = version.replace("~exp", ".dev")
     version = version.replace("ubuntu", "+ubuntu")
     version = version.replace("tanglu", "+tanglu")
+    version = version.replace("deepin", "+deepin")
     version = version.split("build")[0]
 
     return version
