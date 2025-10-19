@@ -172,7 +172,6 @@ class Cache:
         """
         files = [
             "/var/lib/dpkg/status",
-            "/etc/apt/sources.list",
         ]
         dirs = [
             "/var/lib/dpkg",

@@ -1,0 +1,18 @@
+#!/usr/bin/sh
+
+echo 'Modernizing apt sources'
+apt modernize-sources
+
+echo 'Ensuring /etc/apt/sources.list does not exist'
+rm -f /etc/apt/sources.list
+
+echo 'Running unattended-upgrade'
+unattended-upgrade -v
+
+echo 'Checking that /etc/apt/sources.list still does not exist'
+if [ -f /etc/apt/sources.list ]; then
+  echo 'File exists! Failing.'
+  exit 1
+else
+  echo '/etc/apt/sources.list does not exist. All fine.'
+fi
