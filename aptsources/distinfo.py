@@ -262,12 +262,18 @@ class DistInfo:
         # match_mirror_line = re.compile(r".+")
 
         if not dist:
-            try:
-                info = platform.freedesktop_os_release()
-                dist = info.get("ID")
-                if not dist:
+            # freedesktop_os_release() was added in Python 3.10
+            # Use getattr to avoid mypy errors on Python 3.9 (Bullseye)
+            freedesktop_os_release = getattr(platform, "freedesktop_os_release", None)
+            if freedesktop_os_release is not None:
+                try:
+                    info = freedesktop_os_release()
+                    dist = info.get("ID")
+                    if not dist:
+                        dist = None
+                except OSError:
                     dist = None
-            except (AttributeError, OSError):
+            else:
                 dist = None
 
         self.dist = dist
