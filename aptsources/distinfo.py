@@ -27,7 +27,7 @@ import os
 import platform
 import re
 from collections.abc import Iterator
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
 import apt_pkg
 from apt_pkg import gettext as _
@@ -263,7 +263,7 @@ class DistInfo:
 
         if not dist:
             try:
-                info = platform.freedesktop_os_release()  # type: ignore[attr-defined]
+                info = platform.freedesktop_os_release()
                 dist = info.get("ID")
                 if not dist:
                     dist = None
@@ -373,7 +373,9 @@ class DistInfo:
         template = cast(Template, None)
         component = cast(Component, None)
 
-    def finish_template(self, template: Template, component: Optional[Component]) -> None:
+    def finish_template(
+        self, template: Template, component: Optional[Component]
+    ) -> None:
         "finish the current tempalte"
         if not template:
             return

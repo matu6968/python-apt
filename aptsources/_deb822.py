@@ -9,6 +9,7 @@
 import collections
 import io
 import typing
+from typing import Optional, Union
 
 import apt_pkg
 

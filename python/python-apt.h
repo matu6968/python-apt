@@ -39,7 +39,6 @@
 
 // Feature detection macros for API compatibility with APT 2.2+ (libapt-pkg 6.0+)
 // Only features that differ between APT 2.2.x and 2.6+ need detection
-// Features added in libapt-pkg 4.x/5.x are always available in 2.2+
 #ifndef APT_HAVE_IS_SECURITY_UPDATE
 // pkgCache::VerIterator::IsSecurityUpdate() was added in APT 2.6+ (bookworm+)
 // Use APT_VERSION_MAJOR/MINOR from pkg-config (defined in setup.py) for accurate detection

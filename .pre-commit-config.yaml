@@ -3,7 +3,8 @@ repos:
     rev: v3.19.0
     hooks:
       - id: pyupgrade
-        args: [--py311-plus]
+        args: [--py39-plus]
+        exclude: setup.py
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
