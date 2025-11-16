@@ -37,6 +37,52 @@
 #include <apt-pkg/algorithms.h>
 #include <apt-pkg/hashes.h>
 
+// Feature detection macros for API compatibility with APT 2.2+ (libapt-pkg 6.0+)
+// Only features that differ between APT 2.2.x and 2.6+ need detection
+// Features added in libapt-pkg 4.x/5.x are always available in 2.2+
+#ifndef APT_HAVE_IS_SECURITY_UPDATE
+// pkgCache::VerIterator::IsSecurityUpdate() was added in APT 2.6+ (bookworm+)
+// Use APT_VERSION_MAJOR/MINOR from pkg-config (defined in setup.py) for accurate detection
+// Bullseye (APT 2.2.x) has libapt-pkg 6.0 headers but IsSecurityUpdate() doesn't exist
+#if defined(APT_VERSION_MAJOR) && defined(APT_VERSION_MINOR)
+// Use pkg-config detected version (most accurate)
+#if APT_VERSION_MAJOR > 2 || (APT_VERSION_MAJOR == 2 && APT_VERSION_MINOR >= 6)
+#define APT_HAVE_IS_SECURITY_UPDATE 1
+#else
+#define APT_HAVE_IS_SECURITY_UPDATE 0
+#endif
+#else
+// Fallback: if pkg-config version not available, default to 0 (conservative)
+#define APT_HAVE_IS_SECURITY_UPDATE 0
+#endif
+#endif
+
+#ifndef APT_HAVE_PHASING_APPLIED
+// pkgDepCache::PhasingApplied() was added in APT 2.6+ (bookworm+)
+#if defined(APT_VERSION_MAJOR) && defined(APT_VERSION_MINOR)
+#if APT_VERSION_MAJOR > 2 || (APT_VERSION_MAJOR == 2 && APT_VERSION_MINOR >= 6)
+#define APT_HAVE_PHASING_APPLIED 1
+#else
+#define APT_HAVE_PHASING_APPLIED 0
+#endif
+#else
+#define APT_HAVE_PHASING_APPLIED 0
+#endif
+#endif
+
+#ifndef APT_HAVE_KEEP_PHASED_UPDATES
+// pkgProblemResolver::KeepPhasedUpdates() was added in APT 2.6+ (bookworm+)
+#if defined(APT_VERSION_MAJOR) && defined(APT_VERSION_MINOR)
+#if APT_VERSION_MAJOR > 2 || (APT_VERSION_MAJOR == 2 && APT_VERSION_MINOR >= 6)
+#define APT_HAVE_KEEP_PHASED_UPDATES 1
+#else
+#define APT_HAVE_KEEP_PHASED_UPDATES 0
+#endif
+#else
+#define APT_HAVE_KEEP_PHASED_UPDATES 0
+#endif
+#endif
+
 typedef PyObject *ActionGroupF(pkgDepCache::ActionGroup *);
 typedef pkgDepCache::ActionGroup*& ActionGroupT(PyObject *self);
 

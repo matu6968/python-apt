@@ -27,13 +27,13 @@ import os
 import platform
 import re
 from collections.abc import Iterator
-from typing import cast
+from typing import Optional, Union, cast
 
 import apt_pkg
 from apt_pkg import gettext as _
 
 
-def _expand_template(template: str, csv_path: str) -> Iterator[str]:
+def _expand_template(template: Optional[str], csv_path: Optional[str]) -> Iterator[str]:
     """Expand the given template.
 
     A template file consists of a header, followed by paragraphs
@@ -45,6 +45,8 @@ def _expand_template(template: str, csv_path: str) -> Iterator[str]:
 
     It yields lines of template info.
     """
+    if not template or not csv_path:
+        return
 
     known_suites = set()
 
@@ -121,18 +123,18 @@ def _expand_template(template: str, csv_path: str) -> Iterator[str]:
 
 class Template:
     def __init__(self) -> None:
-        self.name: str | None = None
+        self.name: Optional[str] = None
         self.child = False
         self.parents: list[Template] = []  # ref to parent template(s)
-        self.match_name: str | None = None
-        self.description: str | None = None
-        self.base_uri: str | None = None
-        self.type: str | None = None
+        self.match_name: Optional[str] = None
+        self.description: Optional[str] = None
+        self.base_uri: Optional[str] = None
+        self.type: Optional[str] = None
         self.components: list[Component] = []
         self.children: list[Template] = []
-        self.match_uri: str | None = None
+        self.match_uri: Optional[str] = None
         self.mirror_set: dict[str, Mirror] = {}
-        self.distribution: str | None = None
+        self.distribution: Optional[str] = None
         self.available = True
         self.official = True
 
@@ -153,22 +155,22 @@ class Component:
     def __init__(
         self,
         name: str,
-        desc: str | None = None,
-        long_desc: str | None = None,
-        parent_component: str | None = None,
+        desc: Optional[str] = None,
+        long_desc: Optional[str] = None,
+        parent_component: Optional[str] = None,
     ):
         self.name = name
         self.description = desc
         self.description_long = long_desc
         self.parent_component = parent_component
 
-    def get_parent_component(self) -> str | None:
+    def get_parent_component(self) -> Optional[str]:
         return self.parent_component
 
     def set_parent_component(self, parent: str) -> None:
         self.parent_component = parent
 
-    def get_description(self) -> str | None:
+    def get_description(self) -> Optional[str]:
         if self.description_long is not None:
             return self.description_long
         elif self.description is not None:
@@ -182,7 +184,7 @@ class Component:
     def set_description_long(self, desc: str) -> None:
         self.description_long = desc
 
-    def get_description_long(self) -> str | None:
+    def get_description_long(self) -> Optional[str]:
         return self.description_long
 
 
@@ -190,7 +192,7 @@ class Mirror:
     """Storage for mirror related information"""
 
     def __init__(
-        self, proto: str, hostname: str, dir: str, location: str | None = None
+        self, proto: str, hostname: str, dir: str, location: Optional[str] = None
     ):
         self.hostname = hostname
         self.repositories: list[Repository] = []
@@ -214,7 +216,7 @@ class Mirror:
     def get_repo_urls(self) -> list[str]:
         return [r.get_url(self.hostname) for r in self.repositories]
 
-    def get_location(self) -> str | None:
+    def get_location(self) -> Optional[str]:
         return self.location
 
     def set_location(self, location: str) -> None:
@@ -244,7 +246,7 @@ def split_url(url: str) -> list[str]:
 class DistInfo:
     def __init__(
         self,
-        dist: str | None = None,
+        dist: Optional[str] = None,
         base_dir: str = "/usr/share/python-apt/templates",
     ):
         self.metarelease_uri = ""
@@ -260,15 +262,24 @@ class DistInfo:
         # match_mirror_line = re.compile(r".+")
 
         if not dist:
-            info = platform.freedesktop_os_release()
-            dist = info["ID"]
+            try:
+                info = platform.freedesktop_os_release()  # type: ignore[attr-defined]
+                dist = info.get("ID")
+                if not dist:
+                    dist = None
+            except (AttributeError, OSError):
+                dist = None
 
         self.dist = dist
 
         map_mirror_sets = {}
 
-        dist_fname = f"{base_dir}/{dist}.info"
-        csv_fname = f"/usr/share/distro-info/{dist.lower()}.csv"
+        if dist:
+            dist_fname = f"{base_dir}/{dist}.info"
+            csv_fname = f"/usr/share/distro-info/{dist.lower()}.csv"
+        else:
+            dist_fname = None
+            csv_fname = None
 
         # FIXME: Logic doesn't work with types.
         template = cast(Template, None)
@@ -362,7 +373,7 @@ class DistInfo:
         template = cast(Template, None)
         component = cast(Component, None)
 
-    def finish_template(self, template: Template, component: Component | None) -> None:
+    def finish_template(self, template: Template, component: Optional[Component]) -> None:
         "finish the current tempalte"
         if not template:
             return

@@ -10,6 +10,7 @@
 // Include Files							/*{{{*/
 #include "generic.h"
 #include "apt_pkgmodule.h"
+#include "python-apt.h"
 
 #include <apt-pkg/pkgcache.h>
 #include <apt-pkg/cachefile.h>
@@ -1004,7 +1005,12 @@ static PyObject *VersionGetTranslatedDescription(PyObject *Self, void*) {
 }
 
 static PyObject *VersionGetIsSecurityUpdate(PyObject *Self, void*) {
+#if APT_HAVE_IS_SECURITY_UPDATE
    return PyBool_FromLong(Version_GetVer(Self).IsSecurityUpdate());
+#else
+   // IsSecurityUpdate() not available in this version of libapt-pkg (before APT 2.6 / libapt-pkg 6.0)
+   Py_RETURN_FALSE;
+#endif
 }
 
 static PyObject *VersionGetMultiArch(PyObject *Self, void*)

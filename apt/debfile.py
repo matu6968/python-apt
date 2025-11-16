@@ -23,7 +23,7 @@ import os
 import sys
 from collections.abc import Iterable
 from io import BytesIO
-from typing import cast
+from typing import Optional, Union, cast
 
 import apt_inst
 import apt_pkg
@@ -46,19 +46,19 @@ class DebPackage:
     debug = 0
 
     def __init__(
-        self, filename: str | None = None, cache: apt.Cache | None = None
+        self, filename: Optional[str] = None, cache: Optional[apt.Cache] = None
     ) -> None:
         if cache is None:
             cache = apt.Cache()
         self._cache = cache
         self._debfile = cast(apt_inst.DebFile, None)
         self.pkgname = ""
-        self.filename: str | None = None
-        self._sections: dict[str, str] | apt_pkg.TagSection[str] = {}  # noqa
+        self.filename: Optional[str] = None
+        self._sections: Union[dict[str, str], apt_pkg.TagSection[str]] = {}  # noqa
         self._need_pkgs: list[str] = []
         self._check_was_run = False
         self._failure_string = ""
-        self._multiarch: str | None = None
+        self._multiarch: Optional[str] = None
         if filename:
             self.open(filename)
 
@@ -346,7 +346,7 @@ class DebPackage:
         """
         self._dbg(3, f"replaces_real_pkg() {pkgname} {oper} {ver}")
         pkg = self._cache[pkgname]
-        pkgver: str | None = None
+        pkgver: Optional[str] = None
         if pkg.is_installed:
             assert pkg.installed is not None
             pkgver = pkg.installed.version
@@ -653,7 +653,7 @@ class DebPackage:
         return hex
 
     @staticmethod
-    def to_strish(in_data: str | Iterable[int]) -> str:
+    def to_strish(in_data: Union[str, Iterable[int]]) -> str:
         s = ""
         # py2 compat, in_data is type string
         if isinstance(in_data, str):
@@ -715,7 +715,7 @@ class DebPackage:
             print(msg, file=sys.stderr)
 
     def install(
-        self, install_progress: apt.progress.base.InstallProgress | None = None
+        self, install_progress: Optional[apt.progress.base.InstallProgress] = None
     ) -> int:
         """Install the package."""
         if self.filename is None:
@@ -739,10 +739,10 @@ class DscSrcPackage(DebPackage):
     """A locally available source package."""
 
     def __init__(
-        self, filename: str | None = None, cache: apt.Cache | None = None
+        self, filename: Optional[str] = None, cache: Optional[apt.Cache] = None
     ) -> None:
         DebPackage.__init__(self, None, cache)
-        self.filename: str | None = filename
+        self.filename: Optional[str] = filename
         self._depends: list[list[tuple[str, str, str]]] = []
         self._conflicts: list[list[tuple[str, str, str]]] = []
         self._installed_conflicts: set[str] = set()

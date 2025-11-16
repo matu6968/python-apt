@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 import datetime
 import os
+from typing import Optional
 
 import apt_pkg
 
@@ -44,7 +45,7 @@ def get_maintenance_end_date(
     return (support_end_year, support_end_month)
 
 
-def get_release_date_from_release_file(path: str) -> int | None:
+def get_release_date_from_release_file(path: str) -> Optional[int]:
     """
     return the release date as time_t for the given release file
     """
@@ -62,7 +63,7 @@ def get_release_date_from_release_file(path: str) -> int | None:
 
 def get_release_filename_for_pkg(
     cache: apt.Cache, pkgname: str, label: str, release: str
-) -> str | None:
+) -> Optional[str]:
     "get the release file that provides this pkg"
     if pkgname not in cache:
         return None

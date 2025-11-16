@@ -66,6 +66,32 @@ def get_version():
     return version
 
 
+def get_apt_version():
+    """Get APT version using pkg-config and return (major, minor) tuple"""
+    try:
+        proc = subprocess.Popen(
+            ["pkg-config", "--modversion", "apt-pkg"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, _ = proc.communicate()
+        if proc.returncode == 0:
+            version_str = out.decode("utf-8").strip()
+            # Parse version like "2.2.4" or "2.6.0"
+            parts = version_str.split(".")
+            if len(parts) >= 2:
+                try:
+                    major = int(parts[0])
+                    minor = int(parts[1])
+                    return (major, minor)
+                except ValueError:
+                    pass
+    except (OSError, subprocess.SubprocessError):
+        pass
+    # Default to (0, 0) if we can't determine version
+    return (0, 0)
+
+
 # The apt_pkg module.
 files = [
     "apt_pkgmodule.cc",
@@ -96,18 +122,25 @@ files = [
     "hashstringlist.cc",
 ]
 files = sorted(["python/" + fname for fname in files], key=lambda s: s[:-3])
+
+# Get APT version to define feature detection macros
+apt_major, apt_minor = get_apt_version()
+extra_compile_args = [
+    "-Wno-write-strings",
+    "-DAPT_8_CLEANER_HEADERS",
+    "-DAPT_9_CLEANER_HEADERS",
+    "-DAPT_10_CLEANER_HEADERS",
+    "-DPY_SSIZE_T_CLEAN",
+    "-DAPT_VERSION_MAJOR={}".format(apt_major),
+    "-DAPT_VERSION_MINOR={}".format(apt_minor),
+]
+
 apt_pkg = Extension(
     "apt_pkg",
     files,
     # Hack around resolution order for duplicate versioned symbols so we prefer the stdc++ ones
     libraries=["stdc++", "apt-pkg"],
-    extra_compile_args=[
-        "-Wno-write-strings",
-        "-DAPT_8_CLEANER_HEADERS",
-        "-DAPT_9_CLEANER_HEADERS",
-        "-DAPT_10_CLEANER_HEADERS",
-        "-DPY_SSIZE_T_CLEAN",
-    ],
+    extra_compile_args=extra_compile_args,
 )
 
 # The apt_inst module

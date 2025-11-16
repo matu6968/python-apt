@@ -593,16 +593,23 @@ static PyObject *PkgDepCacheMarkedReinstall(PyObject *Self,PyObject *Args)
 
 static PyObject *PkgDepCachePhasingApplied(PyObject *Self,PyObject *Args)
 {
-    pkgDepCache *depcache = GetCpp<pkgDepCache *>(Self);
-
     bool res=false;
     PyObject *PackageObj;
 
     if (PyArg_ParseTuple(Args,"O!",&PyPackage_Type,&PackageObj) == 0)
       return 0;
 
+#if APT_HAVE_PHASING_APPLIED
+    pkgDepCache *depcache = GetCpp<pkgDepCache *>(Self);
     pkgCache::PkgIterator Pkg = GetCpp<pkgCache::PkgIterator>(PackageObj);
     res = depcache->PhasingApplied(Pkg);
+#else
+    // PhasingApplied() not available in this version of libapt-pkg (before APT 2.6)
+    // Phased updates are not supported, so always return True (update is ready)
+    (void)Self;  // Suppress unused variable warning
+    (void)PackageObj;  // Suppress unused variable warning
+    res = true;
+#endif
 
     return HandleErrors(PyBool_FromLong(res));
 }
@@ -944,13 +951,20 @@ static PyObject *PkgProblemResolverClear(PyObject *Self,PyObject *Args)
 static PyObject *PkgProblemResolverKeepPhasedUpdates(PyObject *Self,PyObject *Args)
 {
    bool res;
-   pkgProblemResolver *fixer = GetCpp<pkgProblemResolver *>(Self);
    if (PyArg_ParseTuple(Args,"") == 0)
       return 0;
 
+#if APT_HAVE_KEEP_PHASED_UPDATES
+   pkgProblemResolver *fixer = GetCpp<pkgProblemResolver *>(Self);
    Py_BEGIN_ALLOW_THREADS
    res = fixer->KeepPhasedUpdates();
    Py_END_ALLOW_THREADS
+#else
+   // KeepPhasedUpdates() not available in this version of libapt-pkg (before APT 2.6)
+   // Phased updates are not supported, so return False (no phased updates to keep)
+   (void)Self;  // Suppress unused variable warning
+   res = false;
+#endif
 
    return HandleErrors(PyBool_FromLong(res));
 }
